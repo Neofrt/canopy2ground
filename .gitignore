@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+~$*
+
+# Local project configuration
+config/project_config.json
+project_config.json
+
+# Field and derived data: kept outside Git by default
+data/raw/
+data/processed/
+data/external/
+results/*
+
+# Keep documentation placeholders
+!results/README.md
+
+# Temporary / logs
+*.log
+*.tmp
+*.bak
+*.zip

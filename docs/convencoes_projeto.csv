@@ -1,0 +1,13 @@
+﻿item,convention
+Fuso do projeto,America/Belem (UTC−3).
+TMS — timestamp RAW,TOMST registra o timestamp em UTC; converter UTC→America/Belem.
+TMS — tz_q,Offset local em incrementos de 15 min; usar apenas como metadado de auditoria.
+Período luminoso,06:00 inclusive a 18:00 exclusive.
+Dia hidrológico,12:00–12:00; o registro exatamente às 12:00 fecha o dia.
+Precipitação externa,PASTO.
+Pluviômetro 22094687,"0,2 mm por tombamento quando o export está em contagens."
+RH elevada em PRIMARIA,Condição real verificada; não classificar como saturação suspeita.
+"|Δθ| > 0,10 m³ m⁻³",Evento eco-hidrológico forte a investigar; não excluir automaticamente.
+Datas,Sem corte global fixo; usar disponibilidade e QA de cada sensor.
+Poços,Pressão absoluta não é profundidade do lençol; falta compensação barométrica e posição real do sensor.
+Profundidades dos poços,~14 m PASTO e ~20 m SECUNDARIA são valores provisórios.

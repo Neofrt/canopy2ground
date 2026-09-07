@@ -1,0 +1,18 @@
+﻿dataset,role,description,key,temporal_grain,recommended_use
+integrated/metricas_diarias_integradas.csv,PRINCIPAL,Base diária integrada por data × site × profundidade.,date + site + depth_cm,diária; TMS/chuva 12–12; microclima 06–18,"Modelos eco-hidrológicos, sínteses e relações chuva–solo–microclima–poço."
+integrated/dados_integrados_30min.csv,PRINCIPAL 30 MIN,"Base sincronizada de microclima, TMS, poço e chuva externa.",datetime,30 min,"Eventos, defasagens e dinâmica subdiária."
+precipitacao/04_precipitacao_diaria_pasto_externo.csv,PRINCIPAL CHIRPS,Série canônica diária do pluviômetro externo do PASTO com QA.,date,12–12 diária,Validação/harmonização com CHIRPS e comparação com INMET.
+integrated/microclima_diario_integrado.csv,PRINCIPAL MICROCLIMA,"Resumo diário de microclima, buffering e cobertura fracionária.",date + site,06–18 diária,Regulação microclimática e estrutura.
+tms/tms_diario_hidrologico.csv,PRINCIPAL TMS,Resumo diário de água no solo por site/profundidade.,date + site + depth_cm,12–12 diária,"VWC, Δθ e eventos de molhamento/secagem."
+poco/pocos_diario_pressao_absoluta.csv,PRINCIPAL POÇO,Resumo diário da pressão absoluta dos poços.,date + site,diária,Dinâmica relativa dos poços antes da compensação barométrica.
+microclima/microclima_30min_long.csv,SUPORTE,Microclima em formato longo.,site + datetime,30 min,Diagnóstico e análises por local.
+tms/tms_30min_long.csv,SUPORTE,TMS em formato longo por profundidade.,site + depth_cm + datetime,30 min,Perfil e eventos.
+poco/pocos_30min.csv,SUPORTE,Poços harmonizados em 30 min.,site + datetime,30 min,Eventos e alinhamento.
+precipitacao/03_precipitacao_diaria_todos_sites.csv,SUPORTE,Chuva diária local de todos os sites.,date + site,12–12 diária,Comparações entre chuva externa e sob cobertura.
+microclima/microclima_native.csv,AUDITORIA,Registros nativos selecionados/deduplicados dos HOBO MX.,site + datetime,nativa,Rastreabilidade.
+tms/tms_native.csv,AUDITORIA,"TMS selecionado com sinal bruto, UTC/local e metadados de fuso.",site + position + datetime,nativa,"Rastreabilidade, timezone e recalibração."
+poco/pocos_native.csv,AUDITORIA,Registros nativos dos poços com flags.,site + serial + datetime,nativa,Rastreabilidade.
+precipitacao/02_registros_normalizados.csv,AUDITORIA,Chuva normalizada antes da agregação.,site + serial + datetime,nativa,Auditoria de conversão/deduplicação.
+precipitacao/01_auditoria_arquivos.csv,AUDITORIA,Inventário de arquivos de chuva.,source_file,arquivo,Controle de ingestão.
+precipitacao/06_conflitos_duplicatas.csv,AUDITORIA,Conflitos entre downloads cumulativos de chuva.,site + serial + datetime,registro,Rastreabilidade das decisões.
+precipitacao/07_transicoes_e_lacunas.csv,AUDITORIA,Trocas de equipamento e lacunas conhecidas.,event,evento,Contexto operacional.

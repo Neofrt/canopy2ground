@@ -1,0 +1,80 @@
+﻿variable,group,definition,unit,temporal_scale,origin_or_formula,interpretation,qa_or_status,primary_dataset
+datetime,tempo,Data e hora local do registro processado.,America/Belem,nativa / 30 min,"Timestamp do sensor; para TMS, RAW UTC convertido para America/Belem.",Base para alinhamento temporal.,TMS: não usar tz_q para deslocar o timestamp.,*_30min*.csv
+datetime_utc,tempo,Timestamp UTC preservado para os registros TMS.,UTC,nativa,Timestamp nativo TOMST interpretado explicitamente como UTC.,Auditoria da conversão temporal.,Não é o horário local de análise.,tms_native.csv
+date,tempo,Data civil/local associada ao registro ou resumo diário.,YYYY-MM-DD,diária,Derivada de datetime local.,Chave diária.,Sem corte global fixo de início.,metricas_diarias_integradas.csv
+hydro_date,tempo,Data do dia hidrológico cuja janela termina às 12:00.,YYYY-MM-DD,12:00–12:00,12:00 fecha o dia; instantes >12:00 pertencem ao dia seguinte.,Alinha chuva e água no solo.,Usar em métricas hidrológicas.,dados_integrados_30min.csv
+periodo_luz,tempo,Indica o período luminoso operacional.,boolean,30 min,06:00 inclusive até 18:00 exclusive.,Base dos resumos diurnos.,Convenção fixa.,dados_integrados_30min.csv
+hora,tempo,Hora local formatada.,HH:MM,30 min,Derivada de datetime.,Inspeção rápida.,—,dados_integrados_30min.csv
+site,identificador,Código analítico do ambiente.,pasto/cap/ref,todas,PASTO→pasto; SECUNDARIA→cap; PRIMARIA→ref.,Integração/modelagem.,—,metricas_diarias_integradas.csv
+depth_cm,identificador,Profundidade nominal do TMS.,cm,TMS,Inventário de sensores.,15/50/100 cm; CAP profundo = 80 cm.,Sensor específico.,metricas_diarias_integradas.csv
+depth_m,identificador,Profundidade nominal do TMS.,m,TMS,depth_cm / 100.,Unidade SI.,—,metricas_diarias_integradas.csv
+serial,identificador,Número de série do sensor.,texto,todas,Metadado do equipamento.,Rastreabilidade.,—,vários
+temp_C,microclima,Temperatura do ar.,°C,nativa / 30 min,HOBO MX2308.,Microclima local.,—,microclima_30min_long.csv
+temp_min_C,microclima,Temperatura mínima do intervalo.,°C,30 min,Mínimo dos registros nativos.,Extremo térmico.,—,microclima_30min_long.csv
+temp_max_C,microclima,Temperatura máxima do intervalo.,°C,30 min,Máximo dos registros nativos.,Extremo térmico.,—,microclima_30min_long.csv
+rh_pct,microclima,Umidade relativa do ar.,%,nativa / 30 min,HOBO MX2308.,Condição higrométrica.,RH alta em PRIMARIA foi verificada e é real.,microclima_30min_long.csv
+vpd_kPa,microclima,Déficit de pressão de vapor.,kPa,nativa / 30 min,HOBO MX2308.,Demanda atmosférica.,Não mascarar por alta RH em PRIMARIA.,microclima_30min_long.csv
+vpd_max_kPa,microclima,VPD máximo no intervalo.,kPa,30 min,Máximo dos registros nativos.,Extremo de demanda.,—,microclima_30min_long.csv
+par_umol,radiação,Radiação fotossinteticamente ativa.,µmol m⁻² s⁻¹,nativa / 30 min,HOBO MX2308.,Disponibilidade de luz.,—,microclima_30min_long.csv
+dewpoint_C,microclima,Temperatura do ponto de orvalho.,°C,nativa / 30 min,HOBO quando disponível.,Umidade atmosférica.,Pode estar ausente.,microclima_30min_long.csv
+temp_luz_C,microclima,Temperatura média entre 06:00–18:00.,°C,diária,Média dos intervalos válidos.,Microclima diurno.,Cobertura mínima configurada.,microclima_diario_integrado.csv
+rh_luz_pct,microclima,RH média entre 06:00–18:00.,%,diária,Média dos intervalos válidos.,Microclima diurno.,Saturação da PRIMARIA é mantida.,microclima_diario_integrado.csv
+vpd_luz_kPa,microclima,VPD médio entre 06:00–18:00.,kPa,diária,Média dos intervalos válidos.,Demanda atmosférica diurna.,Saturação da PRIMARIA não invalida o valor.,microclima_diario_integrado.csv
+par_luz_umol,radiação,PAR médio local entre 06:00–18:00.,µmol m⁻² s⁻¹,diária,Média diurna.,Disponibilidade de luz.,—,microclima_diario_integrado.csv
+par_externo_luz_umol,radiação,PAR médio simultâneo do PASTO (I0).,µmol m⁻² s⁻¹,diária,Pares simultâneos.,Referência externa.,PASTO é a referência.,microclima_diario_integrado.csv
+dli_mol_m2,radiação,Integral diária de luz local.,mol m⁻² d⁻¹,diária 06–18,ΣPAR × 1800 / 10^6.,Carga diária de fótons.,Cobertura mínima.,microclima_diario_integrado.csv
+dli_external_mol_m2,radiação,DLI do PASTO usado como referência.,mol m⁻² d⁻¹,diária 06–18,ΣI0 × 1800 / 10^6.,Energia externa.,—,microclima_diario_integrado.csv
+delta_temp_C,buffering,Diferença de temperatura local em relação ao PASTO.,°C,30 min / diária,T_site − T_pasto.,Buffering térmico.,PASTO=0.,metricas_diarias_integradas.csv
+delta_rh_pp,buffering,Diferença de RH local em relação ao PASTO.,p.p.,30 min / diária,RH_site − RH_pasto.,Buffering higrométrico.,PASTO=0.,metricas_diarias_integradas.csv
+delta_vpd_kPa,buffering,Diferença de VPD local em relação ao PASTO.,kPa,30 min / diária,VPD_site − VPD_pasto.,Buffering da demanda.,PASTO=0.,metricas_diarias_integradas.csv
+n_rh_luz,cobertura_dados,Número de intervalos diurnos com RH válida.,contagem,diária,Contagem 06–18.,Completude.,—,microclima_diario_integrado.csv
+n_rh_saturado,diagnóstico,"Número de intervalos com RH ≥ 99,9%.",contagem,diária,Contagem descritiva.,Frequência de quase saturação.,Não é QA de exclusão.,microclima_diario_integrado.csv
+fracao_rh_saturado,diagnóstico,"Fração de registros diurnos com RH ≥ 99,9%.",0–1,diária,n_rh_saturado/n_rh_luz.,Caracteriza condição muito úmida.,Não excluir PRIMARIA.,microclima_diario_integrado.csv
+rh_saturation_observed,diagnóstico,Indicador descritivo de saturação frequente.,boolean,diária,"fracao_rh_saturado > 0,5.",Descrição ambiental.,Não significa erro.,microclima_diario_integrado.csv
+qa_rh_vpd,compatibilidade,Status de disponibilidade de RH/VPD.,ok/sem_dados,diária,Mantido por compatibilidade.,Não filtra saturação.,—,microclima_diario_integrado.csv
+rh_luz_qc_pct,compatibilidade,Alias de rh_luz_pct.,%,diária,Igual a rh_luz_pct na implementação atual.,Compatibilidade com scripts antigos.,Não remove saturação.,metricas_diarias_integradas.csv
+vpd_luz_qc_kPa,compatibilidade,Alias de vpd_luz_kPa.,kPa,diária,Igual a vpd_luz_kPa na implementação atual.,Compatibilidade.,Não remove saturação.,metricas_diarias_integradas.csv
+n_par_pareado,estrutura,Número de pares simultâneos PAR local/externo.,contagem,diária,I e I0 válidos e I0>0.,Suporte da transmitância.,Mínimo configurado.,microclima_diario_integrado.csv
+soma_I,estrutura,Soma do PAR local nos pares válidos.,soma discreta,diária,ΣI.,Numerador da transmitância.,—,microclima_diario_integrado.csv
+soma_I0,estrutura,Soma do PAR externo nos pares válidos.,soma discreta,diária,ΣI0.,Denominador da transmitância.,—,microclima_diario_integrado.csv
+transmittance_daily,estrutura,Transmitância diária do dossel.,0–1,diária,ΣI/ΣI0; PASTO=1.,Fração de luz transmitida.,Diagnóstico fora 0–1.,microclima_diario_integrado.csv
+fractional_cover_daily,estrutura,Cobertura fracionária diária.,0–1,diária,1−transmittance; PASTO=0.,Métrica estrutural dinâmica.,Métrica principal de estrutura.,microclima_diario_integrado.csv
+qa_fc_daily,QA,Status da cobertura fracionária.,categoria,diária,referencia/sem_dados/fora_0_1/ok.,Diagnóstico de Fc.,—,microclima_diario_integrado.csv
+TMS_T1,TMS,Temperatura T1 nativa TOMST.,°C,nativa,TOMST.,Usada como temperatura do solo no pipeline.,—,tms_native.csv
+TMS_T2,TMS,Temperatura T2 nativa TOMST.,°C,nativa,TOMST.,Diagnóstico/off-soil.,—,tms_native.csv
+TMS_T3,TMS,Temperatura T3 nativa TOMST.,°C,nativa,TOMST.,Diagnóstico térmico.,—,tms_native.csv
+TMS_moist,TMS,Sinal bruto de umidade TOMST.,contagem,nativa,TOMST.,Fonte para recalibração.,Preservar sempre.,tms_native.csv
+tms_signal,TMS,Sinal bruto após seleção/deduplicação.,contagem,30 min / diária,Derivado de TMS_moist.,Permite recalibração.,—,tms_30min_long.csv
+off_soil,TMS_QA,Indicador de sensor fora do solo.,0/1,nativa,Lógica equivalente ao myClim.,Identifica instalação/manuseio.,VWC=NA quando off_soil=1.,tms_native.csv
+off_soil_fraction,TMS_QA,Fração off-soil no intervalo.,0–1,30 min,Média de off_soil.,Diagnóstico.,—,tms_30min_long.csv
+vwc_m3m3,água_solo,Conteúdo volumétrico de água.,m³ m⁻³,30 min,Conversão provisória universal do TMS.,Variável principal de água no solo.,Calibração específica desejável.,tms_30min_long.csv
+swc_pct,água_solo,VWC em porcentagem volumétrica.,% v/v,30 min / diária,100×vwc_m3m3.,Leitura intuitiva.,Mesma informação de VWC.,tms_30min_long.csv
+soil_temp_C,TMS,Temperatura do solo associada ao TMS.,°C,30 min,Média de TMS_T1.,Estado térmico do solo.,—,tms_30min_long.csv
+n_vwc,cobertura_dados,Número de intervalos de 30 min com VWC válida no dia hidrológico.,contagem,diária 12–12,Contagem por site×profundidade.,Completude.,≥39/48 para resumo atual.,tms_diario_hidrologico.csv
+vwc_mean_m3m3,água_solo,VWC média do dia hidrológico.,m³ m⁻³,diária 12–12,Média se cobertura suficiente.,Estado hídrico diário.,—,metricas_diarias_integradas.csv
+swc_mean_pct,água_solo,SWC média do dia hidrológico.,% v/v,diária 12–12,100×VWC média.,Estado hídrico diário.,—,metricas_diarias_integradas.csv
+delta_theta_m3m3,água_solo,Mudança de VWC entre dias hidrológicos consecutivos.,m³ m⁻³ d⁻¹,diária 12–12,VWC(t)−VWC(t−1).,Resposta integrada do solo.,Grandes valores são preservados.,metricas_diarias_integradas.csv
+delta_theta_pp,água_solo,Δθ em pontos percentuais volumétricos.,p.p. v/v d⁻¹,diária,100×delta_theta_m3m3.,Versão intuitiva.,—,metricas_diarias_integradas.csv
+delta_theta_event_class,evento,Classificação descritiva de Δθ grande.,categoria,diária,">0,10 large_wetting; <−0,10 large_drying.",Destaca respostas fortes.,Não é filtro de QA.,metricas_diarias_integradas.csv
+qa_tms_daily,QA,Status de cobertura do resumo diário TMS.,ok/insufficient_coverage,diária,Baseado em n_vwc.,Completude.,Não avalia plausibilidade ecológica.,metricas_diarias_integradas.csv
+tz_q,tempo_TMS,Offset local reportado pelo TOMST em quartos de hora.,quartos de hora,nativa,Metadado do CSV.,Ex.: −12=UTC−3; 4=UTC+1; 0=UTC.,Apenas auditoria.,tms_native.csv
+tz_offset_reported_hours,tempo_TMS,Offset reportado convertido para horas.,h,nativa,tz_q/4.,Audita configuração do logger.,Pode reter configuração do Reino Unido.,tms_native.csv
+tz_reported_matches_project,tempo_TMS,Indica se offset reportado coincide com UTC−3.,boolean,nativa,offset==−3.,Diagnóstico.,Timestamp vem do UTC bruto.,tms_native.csv
+timezone_conversion,tempo_TMS,Conversão temporal aplicada.,texto,nativa,UTC→America/Belem.,Documenta correção temporal.,Obrigatória na implementação atual.,tms_native.csv
+rain_mm,precipitação,Precipitação local do dia hidrológico.,mm,diária 12–12,Total após interpretação do formato.,Chuva local.,"22094687: 0,2 mm/tip quando em contagens.",03_precipitacao_diaria_todos_sites.csv
+rain_local_mm,precipitação,Precipitação do próprio site.,mm,diária 12–12,Join da série local.,Forçamento hídrico local.,Lacunas permanecem NA.,metricas_diarias_integradas.csv
+rain_ext_mm,precipitação,Precipitação externa de referência do PASTO.,mm,diária 12–12,Série canônica do pasto.,Forçamento externo/CHIRPS.,"Lacunas=NA, não zero artificial.",metricas_diarias_integradas.csv
+rain_ext_coverage,QA_precipitação,Cobertura temporal diária do pluviômetro externo.,0–1,diária,observado/esperado.,Completude.,1=completo.,04_precipitacao_diaria_pasto_externo.csv
+rain_ext_status,QA_precipitação,Classe de completude da chuva externa.,categoria,diária,complete/near_complete/partial/missing.,Guia de uso.,—,04_precipitacao_diaria_pasto_externo.csv
+use_for_calibration_strict,QA_precipitação,Elegível sob QA estrito.,boolean,diária,Cobertura completa.,Validação principal CHIRPS.,Recomendado principal.,04_precipitacao_diaria_pasto_externo.csv
+use_for_calibration_relaxed,QA_precipitação,Elegível sob QA relaxado.,boolean,diária,"Cobertura≥0,90.",Sensibilidade.,—,04_precipitacao_diaria_pasto_externo.csv
+raw_value,precipitação_auditoria,Valor bruto lido do arquivo.,unidade original,nativa,RAW HOBO.,Reauditar conversões.,Interpretar junto com mode.,02_registros_normalizados.csv
+mode,precipitação_auditoria,Formato interpretado do registro.,categoria,nativa,Detector do pipeline.,Evita dupla conversão.,—,02_registros_normalizados.csv
+pressure_abs_kPa,poço,Pressão absoluta do logger do poço.,kPa,nativa / 30 min,HOBO de pressão.,Sinal para compensação barométrica futura.,Não é profundidade do lençol.,pocos_30min.csv
+temperature_C,poço,Temperatura registrada no poço.,°C,nativa / 30 min,Logger do poço.,Interpretação/QA.,—,pocos_30min.csv
+pressure_abs_mean_kPa,poço,Pressão absoluta média diária.,kPa,diária,Média 30 min.,Dinâmica relativa.,Sem compensação barométrica.,metricas_diarias_integradas.csv
+pressure_abs_min_kPa,poço,Pressão absoluta mínima diária.,kPa,diária,Mínimo diário.,Extremo.,—,metricas_diarias_integradas.csv
+pressure_abs_max_kPa,poço,Pressão absoluta máxima diária.,kPa,diária,Máximo diário.,Extremo.,—,metricas_diarias_integradas.csv
+delta_pressure_abs_kPa,poço,Mudança diária da pressão absoluta média.,kPa d⁻¹,diária,Pmean(t)−Pmean(t−1).,Resposta relativa do poço.,Não equivale diretamente a Δnível.,metricas_diarias_integradas.csv
+qa_review,QA_poço,Registro que merece revisão por possível manuseio/salto.,boolean,30 min,Regras diagnósticas.,Auditoria.,Não remove automaticamente.,pocos_30min.csv
+qa_review_any,QA_poço,Dia com algum registro do poço marcado para revisão.,boolean,diária,any(qa_review).,Auditoria diária.,—,metricas_diarias_integradas.csv

@@ -1,0 +1,120 @@
+{
+  "config_schema_version": 1,
+  "project_name": "Canopy2Ground",
+  "project_root": "C:/caminho/para/posdoc_cp",
+  "timezone": "America/Belem",
+  "site_map": {
+    "PASTO": "pasto",
+    "SECUNDARIA": "cap",
+    "PRIMARIA": "ref"
+  },
+  "light_period": {
+    "start_hour": 6,
+    "end_hour_exclusive": 18,
+    "grid_minutes": 30,
+    "min_intervals_daily": 20
+  },
+  "hydrologic_day": {
+    "closing_hour": 12,
+    "grid_minutes": 30,
+    "min_intervals_tms": 39
+  },
+  "rain": {
+    "tip_mm": 0.2,
+    "qa_relaxed_threshold": 0.9,
+    "serials": {
+      "22376831": "ref",
+      "22376832": "pasto_then_cap",
+      "22094687": "pasto"
+    },
+    "transfer_22376832_to_cap": "2026-07-18 15:00:00",
+    "new_pasto_22094687_start": "2026-07-23 11:00:00"
+  },
+  "tms": {
+    "soiltype": "universal",
+    "conversion_status": "provisional_until_site_sensor_calibration",
+    "inventory": [
+      {
+        "site": "ref",
+        "position": "01",
+        "depth_m": 0.15,
+        "serial": "95329567"
+      },
+      {
+        "site": "ref",
+        "position": "02",
+        "depth_m": 0.5,
+        "serial": "95329562"
+      },
+      {
+        "site": "ref",
+        "position": "03",
+        "depth_m": 1.0,
+        "serial": "95329551"
+      },
+      {
+        "site": "pasto",
+        "position": "01",
+        "depth_m": 0.15,
+        "serial": "95329559"
+      },
+      {
+        "site": "pasto",
+        "position": "02",
+        "depth_m": 0.5,
+        "serial": "95329570"
+      },
+      {
+        "site": "pasto",
+        "position": "03",
+        "depth_m": 1.0,
+        "serial": "95329552"
+      },
+      {
+        "site": "cap",
+        "position": "01",
+        "depth_m": 0.15,
+        "serial": "95329563"
+      },
+      {
+        "site": "cap",
+        "position": "02",
+        "depth_m": 0.5,
+        "serial": "95329558"
+      },
+      {
+        "site": "cap",
+        "position": "03",
+        "depth_m": 0.8,
+        "serial": "95329566"
+      }
+    ],
+    "ref_100cm_valid_from": "2026-04-02 12:30:00",
+    "universal_vwc_coefficients": {
+      "a": -1.34e-08,
+      "b": 0.000249622,
+      "c": -0.157888813,
+      "reference_temperature_C": 24.0,
+      "air_temperature_correction": 1.91132689118083,
+      "water_temperature_correction": 0.64108
+    },
+    "timestamp_basis": "UTC_in_RAW_convert_to_America/Belem",
+    "tz_q_interpretation": "quarter-hour local offset metadata; audit only, do not shift raw UTC timestamp with it",
+    "ref_100cm_valid_from_note": "Adjusted from 15:30 raw UTC to 12:30 America/Belem after confirming TOMST timestamps are UTC."
+  },
+  "wells": {
+    "pasto": {
+      "logger_serial": "22428978",
+      "reported_well_depth_m": 14.0,
+      "depth_status": "provisional_unverified",
+      "sensor_depth_below_ground_m": null
+    },
+    "cap": {
+      "logger_serial": "22428973",
+      "reported_well_depth_m": 20.0,
+      "depth_status": "provisional_unverified",
+      "sensor_depth_below_ground_m": null
+    }
+  },
+  "project_root_note": "Informational only; --root supplied to run_pipeline.py defines the active workspace."
+}
