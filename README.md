@@ -1,7 +1,6 @@
 # Canopy2Ground
 
 *Integrated monitoring of microclimate, soil water and precipitation*
-<img width="1376" height="768" alt="image_f578f320" src="https://github.com/user-attachments/assets/b62d3d39-c0c9-4ae5-b1a4-5bf9d5d4c7a0" />
 
 **Capitão Poço, Pará, Amazônia brasileira**
 
