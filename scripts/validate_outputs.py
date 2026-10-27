@@ -99,7 +99,7 @@ def main():
         checks.append({"check": "rh_saturation_not_suspect", "status": "PASS" if sat_ok else "FAIL", "detail": f"suspect_rows={int(suspect)}"})
         ok &= sat_ok
 
-    result_dir = root / "results" / "validation"
+    result_dir = root / "results" / "validation" / "field"
     result_dir.mkdir(parents=True, exist_ok=True)
     report = pd.DataFrame(checks)
     report.to_csv(result_dir / "validation_summary.csv", index=False, encoding="utf-8-sig")

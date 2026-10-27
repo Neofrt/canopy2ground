@@ -34,6 +34,8 @@ def main():
         ("Poços - pressão diária", processed/"poco"/"pocos_diario_pressao_absoluta.csv"),
         ("Métricas diárias integradas", processed/"integrated"/"metricas_diarias_integradas.csv"),
         ("Dados integrados 30 min", processed/"integrated"/"dados_integrados_30min.csv"),
+        ("ERA5-Land horário", processed/"climate"/"era5_land_hourly.csv"),
+        ("Clima diário harmonizado", processed/"climate"/"climate_daily_harmonized.csv"),
     ]
 
     rows = []

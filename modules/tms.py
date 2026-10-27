@@ -345,6 +345,8 @@ def process(root: Path, config_path: Path):
         daily=daily.merge(
             soil_light,on=["date","site","depth_cm"],how="left",validate="one_to_one"
         )
+    if "soil_temp_luz_C" in daily.columns:
+        daily["soil_temp_06_18_C"] = daily["soil_temp_luz_C"]
 
     processed=root/"data"/"processed"/"tms"; results=root/"results"/"tms"
     processed.mkdir(parents=True,exist_ok=True); results.mkdir(parents=True,exist_ok=True)

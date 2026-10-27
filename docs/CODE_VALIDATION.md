@@ -1,30 +1,35 @@
-# Canopy2Ground — Code validation status
+# Canopy2Ground v2 — code validation status
 
-## Checks completed before GitHub packaging
+## Checks completed for Canopy2Ground v2.0.0
 
 - Python source compilation: **PASS** (`python -m compileall -q .`)
-- Unit tests: **5/5 PASS**
-  - configuration merge preserves user-defined values;
-  - TMS UTC → `America/Belem` conversion;
-  - hydrologic-day noon boundary;
-  - duplicate-key integration guard;
-  - empty TMS discovery handling.
-- Repository structure: **PASS** — only one `modules/` directory is present.
-- Integration guard tested against the previously supplied processed dataset: **PASS**
-  - 8,284 integrated 30-min rows;
-  - 1,419 daily site × depth rows;
-  - zero duplicate `datetime` keys in the 30-min integrated output;
-  - zero duplicate `date + site + depth_cm` keys in the daily integrated output.
+- Unit tests: **26/26 PASS**
+- Field-processing modules retained from the validated v1 baseline.
+- Climate normalization tests cover INMET, ERA5-Land and CHIRPS-v3 conventions.
+- Precipitation validation tests cover hydrologic-day boundaries, paired coverage, hourly shifts and separation of event detection from wet-day magnitude diagnostics.
+- Operational harmonization tests verify:
+  - temperature uses the current dynamically refitted linear model;
+  - RH uses the current dynamically refitted linear model;
+  - VPD uses the current dynamically refitted linear model;
+  - repeated runs with unchanged paired data do not duplicate model-history entries;
+  - the minimum daily coverage criterion is enforced.
+- Figure generation smoke test: **PASS** for Figures 1–4 using the existing validation outputs; additional smoke test confirmed that missing INMET skips only Figure 1 while Figures 2–4 remain independent.
+- Results architecture simplified to:
+  - `results/validation/field/`
+  - `results/validation/climate/`
+  - `results/harmonization/`
+  - `results/figures/`
+  - `results/tables/`
+- Dependency management consolidated in a single `requirements.txt` and isolated by `.venv` through `setup_env.ps1`/`run.ps1` or the Linux/macOS equivalents.
 
-## Still required on the field-data workstation
+## Validation still required on the field-data workstation
 
-The complete pipeline must be rerun from the actual `data/raw/` directory after replacing the code. This is required because the updated TMS module changes the time-axis interpretation to explicit UTC → `America/Belem` conversion. The automatic `scripts/validate_outputs.py` step will then check the newly generated outputs and stop the pipeline if a core integrity condition fails.
+A release should only be tagged after a complete run against the current field `data/raw/` and the intended external climate inputs. The expected Windows workflow is:
 
-A successful full run should end with:
-
-```text
-VALIDAÇÃO CONCLUÍDA: PASS
-PIPELINE CONCLUÍDO
+```powershell
+.\run.bat
 ```
 
-Only after that run should the generated scientific outputs be treated as the current validated Canopy2Ground products.
+ERA5-Land and CHIRPS-v3 are updated by default; use `--no-download-climate` only when reusing local climate inputs.
+
+A field validation must end with `VALIDAÇÃO CONCLUÍDA: PASS`. Climate, harmonization and final figures are generated only when the required external products are available. INMET acquisition may still require a previously obtained file or the earlier acquisition routine, as documented in the README.

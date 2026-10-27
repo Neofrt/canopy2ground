@@ -1,0 +1,111 @@
+{
+  "climate_schema_version": 3,
+  "timezone": "America/Belem",
+  "reference_site": "pasto",
+  "site_coordinates": {
+    "latitude": -1.760388,
+    "longitude": -47.190124,
+    "status": "EXACT_PASTURE_GAUGE_COORDINATES"
+  },
+  "download": {
+    "start_date": null,
+    "end_date": null,
+    "auto_date_range_from_field": true
+  },
+  "inmet": {
+    "enabled": true,
+    "input_globs": [
+      "data/external/INMET/*.csv"
+    ],
+    "source_timezone": "UTC",
+    "columns": {
+      "date": "Data",
+      "hour_utc": "Hora (UTC)",
+      "temp_C": "Temp. Ins. (C)",
+      "rh_pct": "Umi. Ins. (%)",
+      "dewpoint_C": "Pto Orvalho Ins. (C)",
+      "pressure_hPa": "Pressao Ins. (hPa)",
+      "wind_ms": "Vel. Vento (m/s)",
+      "radiation_kj_m2": "Radiacao (KJ/m²)",
+      "rain_mm": "Chuva (mm)"
+    }
+  },
+  "era5_land": {
+    "enabled": true,
+    "input_globs": [
+      "data/external/ERA5/**/*.csv",
+      "data/external/ERA5/**/*.nc"
+    ],
+    "daily_csv_basis": "hydrologic_12_12_local",
+    "download": {
+      "dataset": "reanalysis-era5-land-timeseries",
+      "format": "netcdf",
+      "variables": [
+        "2m_temperature",
+        "2m_dewpoint_temperature",
+        "total_precipitation",
+        "surface_solar_radiation_downwards",
+        "surface_pressure",
+        "10m_u_component_of_wind",
+        "10m_v_component_of_wind",
+        "volumetric_soil_water_layer_1",
+        "volumetric_soil_water_layer_2",
+        "volumetric_soil_water_layer_3",
+        "volumetric_soil_water_layer_4",
+        "soil_temperature_level_1",
+        "soil_temperature_level_2",
+        "soil_temperature_level_3",
+        "soil_temperature_level_4"
+      ]
+    }
+  },
+  "chirps_v3": {
+    "enabled": true,
+    "products": [
+      "sat",
+      "rnl"
+    ],
+    "input_globs": {
+      "sat": [
+        "data/external/CHIRPS/sat/**/*.csv",
+        "data/external/CHIRPS/sat/**/*.nc"
+      ],
+      "rnl": [
+        "data/external/CHIRPS/rnl/**/*.csv",
+        "data/external/CHIRPS/rnl/**/*.nc"
+      ]
+    },
+    "download": {
+      "method": "remote_cog_point_extraction",
+      "final_only_by_default": true,
+      "include_preliminary_sat": false
+    }
+  },
+  "validation": {
+    "shifts_days": [
+      -1,
+      0,
+      1
+    ],
+    "rain_event_threshold_mm": 0.2,
+    "primary_field_window": "hydrologic_12_12_local",
+    "field_qa_preference": "strict",
+    "chirps_final_only_primary": true,
+    "shifts_hours": [
+      -1,
+      0,
+      1
+    ],
+    "field_qa_sensitivity": "relaxed"
+  },
+  "harmonization": {
+    "enabled": true,
+    "policy_config": "config/harmonization_policy.json",
+    "current_model": "results/harmonization/current_model.json",
+    "temperature": "raw_ERA5_Land",
+    "rh": "linear_harmonized_dynamic_refit",
+    "vpd": "linear_harmonized_dynamic_refit",
+    "fit_policy": "cumulative_refit_each_pipeline_run_when_paired_field_era5_are_available",
+    "history_file": "results/harmonization/model_history.csv"
+  }
+}

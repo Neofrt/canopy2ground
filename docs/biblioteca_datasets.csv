@@ -16,3 +16,8 @@ precipitacao/02_registros_normalizados.csv,AUDITORIA,Chuva normalizada antes da 
 precipitacao/01_auditoria_arquivos.csv,AUDITORIA,Inventário de arquivos de chuva.,source_file,arquivo,Controle de ingestão.
 precipitacao/06_conflitos_duplicatas.csv,AUDITORIA,Conflitos entre downloads cumulativos de chuva.,site + serial + datetime,registro,Rastreabilidade das decisões.
 precipitacao/07_transicoes_e_lacunas.csv,AUDITORIA,Trocas de equipamento e lacunas conhecidas.,event,evento,Contexto operacional.
+climate/field_microclimate_hourly.csv,CLIMATE FIELD,Referência horária do pasto derivada da grade de 30 min.,datetime_local,1 h,Validação horária de ERA5-Land e INMET.
+climate/inmet_hourly.csv,CLIMATE EXTERNAL,INMET horário normalizado de UTC para America/Belem.,datetime_utc,1 h,Validação independente de precipitação e microclima.
+climate/era5_land_daily_windows.csv,CLIMATE EXTERNAL,ERA5-Land diário em janelas temporais padronizadas.,date + window,diária,Validação da reanálise contra campo.
+climate/chirps_v3_sat_daily_point.csv,CLIMATE EXTERNAL,CHIRPS-v3 SAT diário extraído no ponto do pasto.,date,diária,Comparar partição intrapentadal baseada em IMERG.
+climate/chirps_v3_rnl_daily_point.csv,CLIMATE EXTERNAL,CHIRPS-v3 RNL diário extraído no ponto do pasto.,date,diária,Comparar partição intrapentadal baseada em ERA5.

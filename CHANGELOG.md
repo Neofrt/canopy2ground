@@ -1,8 +1,26 @@
 # Canopy2Ground — Changelog
 
-## Unreleased
+## v2.0.0 — 2026-10-27
 
-Nenhuma alteração pendente.
+Segunda versão estável do **Canopy2Ground**, consolidando em um único fluxo o processamento de campo e a integração com produtos climáticos externos.
+
+Principais mudanças em relação à v1:
+
+- pipeline autônomo iniciado diretamente em `data/raw/`, sem dependência computacional da v1;
+- execução simplificada em Windows (`run.bat`) e Linux/macOS (`run.sh`), com criação automática de ambiente virtual;
+- integração das séries de precipitação, microclima, TMS e poços com controle de qualidade e validação estrutural;
+- camada climática para ERA5-Land, INMET e CHIRPS-v3;
+- comparação microclimática diária de 24 h com contrastes pareados, GLSAR AR(1) e correção de Holm;
+- harmonização dinâmica de temperatura, umidade relativa e VPD do ERA5-Land por regressão linear, com validação cruzada *leave-one-day-out* e embargo temporal de um dia;
+- coeficientes reestimados cumulativamente quando novos dias pareados são incorporados, mantendo histórico dos modelos;
+- preservação simultânea das séries ERA5-Land brutas e harmonizadas;
+- geração independente de figuras e tabelas, de modo que a ausência de uma fonte externa não bloqueie produtos que não dependem dela;
+- avaliação da precipitação com ERA5-Land e INMET em escala diária e mensal, preservando CHIRPS-v3 nas rotinas técnicas de validação;
+- relatório automático de resultados e arquivo `REPORT_INPUTS.csv` para auditoria das entradas utilizadas;
+- remoção preventiva de saídas estatísticas antigas antes de novas comparações, evitando reutilização silenciosa de resultados residuais;
+- documentação ampliada de variáveis, datasets, configuração climática, QA e migração;
+- conjunto ampliado de testes automatizados;
+- dados RAW permanecem imutáveis e fora do repositório.
 
 ## v1.0.0 — 2026-09-07
 

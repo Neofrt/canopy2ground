@@ -111,6 +111,12 @@ def micro_daily_integrated(micro30, min_light=20):
         out["delta_rh_qc_pp"] = out["delta_rh_pp"]
         out["delta_vpd_qc_kPa"] = out["delta_vpd_kPa"]
         out["qa_rh_vpd"] = np.where(out["rh_luz_pct"].isna() & out["vpd_luz_kPa"].isna(), "sem_dados", "ok_observed_condition")
+        # Nomes explícitos: médias do período 06:00 <= hora < 18:00.
+        out["temp_06_18_C"] = out["temp_luz_C"]
+        out["rh_06_18_pct"] = out["rh_luz_pct"]
+        out["vpd_06_18_kPa"] = out["vpd_luz_kPa"]
+        out["par_06_18_umol"] = out["par_luz_umol"]
+        out["par_external_06_18_umol"] = out["par_externo_luz_umol"]
         assert_unique(out, ["date", "site"], "microclima_diario_integrado")
     return out
 

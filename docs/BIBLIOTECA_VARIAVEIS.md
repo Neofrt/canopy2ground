@@ -120,3 +120,18 @@
 | `delta_pressure_abs_kPa` | poço | Mudança diária da pressão absoluta média. | kPa d⁻¹ | diária | Não equivale diretamente a Δnível. | `metricas_diarias_integradas.csv` |
 | `qa_review` | QA_poço | Registro que merece revisão por possível manuseio/salto. | boolean | 30 min | Não remove automaticamente. | `pocos_30min.csv` |
 | `qa_review_any` | QA_poço | Dia com algum registro do poço marcado para revisão. | boolean | diária | — | `metricas_diarias_integradas.csv` |
+## Variáveis de compatibilidade climática na v2.0.0
+
+> Os nomes legados com `_luz_` significam **resumo do período 06:00–18:00**. Na v2.0.0, os aliases abaixo tornam a janela explícita sem quebrar scripts existentes.
+
+| Variável | Grupo | Definição | Unidade | Escala | QA/status | Tabela principal |
+|---|---|---|---|---|---|---|
+| `temp_06_18_C` | microclima | Temperatura média do ar entre 06:00–18:00. | °C | diária | Alias de `temp_luz_C`. | `microclima_diario_integrado.csv` |
+| `rh_06_18_pct` | microclima | RH média entre 06:00–18:00. | % | diária | Alias de `rh_luz_pct`; saturação real é preservada. | `microclima_diario_integrado.csv` |
+| `vpd_06_18_kPa` | microclima | VPD médio entre 06:00–18:00. | kPa | diária | Alias de `vpd_luz_kPa`. | `microclima_diario_integrado.csv` |
+| `par_06_18_umol` | radiação | PAR médio entre 06:00–18:00. | µmol m⁻² s⁻¹ | diária | Alias de `par_luz_umol`. | `microclima_diario_integrado.csv` |
+| `soil_temp_06_18_C` | TMS | Temperatura média do solo entre 06:00–18:00. | °C | diária | Alias de `soil_temp_luz_C`. | `tms_diario_hidrologico.csv` |
+| `inmet_rain_mm` | clima externo | Precipitação INMET na janela indicada. | mm | diária | `window` identifica UTC, calendário local ou 12–12. | `inmet_daily_windows.csv` |
+| `era5_precip_mm` | clima externo | Precipitação ERA5-Land na janela indicada. | mm | horária/diária | Testar alinhamentos antes da correção. | `era5_land_daily_windows.csv` |
+| `chirps_sat_mm` | clima externo | CHIRPS-v3 SAT diário no pixel do pasto. | mm | diária | Testar -1/0/+1 dia. | `chirps_v3_sat_daily_point.csv` |
+| `chirps_rnl_mm` | clima externo | CHIRPS-v3 RNL diário no pixel do pasto. | mm | diária | Testar -1/0/+1 dia. | `chirps_v3_rnl_daily_point.csv` |

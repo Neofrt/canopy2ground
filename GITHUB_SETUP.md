@@ -1,91 +1,54 @@
-# Publicação do Canopy2Ground no GitHub
+# Publicação e manutenção do Canopy2Ground no GitHub
 
-Repositório criado:
+Repositório oficial:
 
 ```text
 https://github.com/Neofrt/canopy2ground.git
 ```
 
-## 1. Antes do primeiro commit
+A branch pública principal é `main`. A versão histórica `v1.0.0` deve permanecer preservada por tag e no histórico Git. A versão atual é **Canopy2Ground v2.0.0**.
 
-Confirme que a raiz local contém apenas uma implementação dos módulos:
+## 1. Antes de publicar uma versão
 
-```text
-run_pipeline.py
-modules/
-    precipitation.py
-    microclimate.py
-    tms.py
-    wells.py
-    integrate.py
+Na raiz do projeto, confirme que dados locais e configurações privadas continuam ignorados:
+
+```powershell
+git status --ignored
 ```
 
-Não deve existir uma segunda cópia em `scripts/modules/`.
+Não devem ser enviados dados de `data/raw/`, `data/processed/`, `data/external/`, `results/`, `config/project_config.json` ou `config/climate_config.json`.
 
-Execute os testes estáticos e unitários:
+Valide o código:
 
 ```powershell
 python -m compileall -q .
-python -m unittest discover -s tests -v
+python -m pytest -q
 ```
 
-Depois execute o pipeline com os RAW reais:
+## 2. Atualizar a `main` sem reescrever histórico
 
 ```powershell
-python .\run_pipeline.py --root .
-```
-
-Confira `data/processed/` e `results/` antes do primeiro `push`.
-
-## 2. Inicializar o repositório local
-
-Na raiz do projeto:
-
-```powershell
-git init
-git branch -M main
-git status
-```
-
-Conecte ao repositório já criado:
-
-```powershell
-git remote add origin https://github.com/Neofrt/canopy2ground.git
-```
-
-Se `origin` já existir, confira primeiro:
-
-```powershell
-git remote -v
-```
-
-## 3. Primeiro commit
-
-```powershell
+git checkout main
+git pull --ff-only origin main
 git add .
 git status
-git commit -m "Initial validated release of Canopy2Ground"
-git push -u origin main
+git commit -m "Release Canopy2Ground v2.0.0"
+git push origin main
 ```
 
-Antes do `git commit`, confira em `git status` que **não aparecem** arquivos de `data/raw`, `data/processed`, `data/external`, `results` ou `config/project_config.json`.
+Não utilizar `force push` para publicar uma release.
 
-## 4. Criar a primeira tag
+## 3. Tags
 
-Depois de confirmar que o primeiro `push` foi aceito e que o GitHub Actions terminou com sucesso:
+A tag histórica `v1.0.0` deve continuar apontando para o commit original da primeira versão validada. Para a v2:
 
 ```powershell
-git tag -a v1.0.0 -m "Canopy2Ground v1.0.0 — first validated release"
-git push origin v1.0.0
+git tag -a v2.0.0 -m "Canopy2Ground v2.0.0"
+git push origin v2.0.0
 ```
 
-## 5. Atualizações futuras
+## 4. Release
 
-```powershell
-git status
-git add .
-git commit -m "Describe update"
-git push
-```
+Após o `push` e a conclusão do CI, publique uma GitHub Release associada à tag `v2.0.0`, usando `docs/RELEASE_v2.0.0.md` como base para a nota da release.
 
-O GitHub versiona o código, a documentação e as convenções metodológicas. Os dados de campo permanecem fora do repositório por padrão.
+O GitHub versiona código, documentação e convenções metodológicas. Os dados de campo e resultados científicos locais permanecem fora do repositório por padrão.

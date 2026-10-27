@@ -1,6 +1,6 @@
 # Status atual da base de dados
 
-Atualizado automaticamente em: **2026-09-07 17:10**
+Atualizado automaticamente em: **2026-09-07 20:00**
 
 Esta página é gerada a partir das saídas de `data/processed/` e pode ser atualizada após cada execução do pipeline.
 

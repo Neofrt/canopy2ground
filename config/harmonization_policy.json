@@ -1,0 +1,41 @@
+{
+  "schema_version": 2,
+  "reference_site": "pasto",
+  "temporal_scale": "daily_24h",
+  "update_mode": "cumulative_refit_each_pipeline_run",
+  "validation": {
+    "method": "leave-one-day-out",
+    "embargo_days": 1,
+    "primary_ranking": "RMSE",
+    "secondary_metrics": [
+      "CCC",
+      "bias",
+      "MAE",
+      "R2"
+    ]
+  },
+  "operational_methods": {
+    "temperature": "linear",
+    "rh": "linear",
+    "vpd": "linear"
+  },
+  "bounds": {
+    "rh": {
+      "min": 0.0,
+      "max": 100.0
+    },
+    "vpd": {
+      "min": 0.0
+    }
+  },
+  "history": {
+    "enabled": true,
+    "file": "results/harmonization/model_history.csv"
+  },
+  "notes": [
+    "The method is versioned, but coefficients are refitted cumulatively whenever new paired Pasture + ERA5-Land days are available.",
+    "Temperature, RH and VPD use linear models whose coefficients are updated from all currently available paired daily observations.",
+    "Model selection is supported by leave-one-day-out cross-validation with a one-day temporal embargo; raw ERA5-Land values are always retained.",
+    "Model history is retained so coefficient evolution can be audited over time."
+  ]
+}

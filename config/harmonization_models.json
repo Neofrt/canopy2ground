@@ -1,0 +1,5 @@
+{
+  "deprecated": true,
+  "used_by_pipeline": false,
+  "message": "Canopy2Ground no longer uses frozen harmonization coefficients. The versioned method is defined in config/harmonization_policy.json; the current coefficients are refitted from paired Pasture + ERA5-Land data and written to results/harmonization/current_model.json."
+}

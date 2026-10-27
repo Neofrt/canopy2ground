@@ -16,7 +16,9 @@ Thumbs.db
 
 # Local project configuration
 config/project_config.json
+config/climate_config.json
 project_config.json
+climate_config.json
 
 # Field and derived data: kept outside Git by default
 data/raw/

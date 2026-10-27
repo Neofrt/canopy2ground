@@ -143,6 +143,11 @@ def process(root: Path, config_path: Path | None = None):
     daily=pd.DataFrame(rows)
     if not daily.empty:
         daily["rh_luz_qc_pct"]=daily["rh_luz_pct"];daily["vpd_luz_qc_kPa"]=daily["vpd_luz_kPa"]
+        # Nomes explícitos mantidos na v2; os campos *_luz_* ficam por compatibilidade.
+        daily["temp_06_18_C"] = daily["temp_luz_C"]
+        daily["rh_06_18_pct"] = daily["rh_luz_pct"]
+        daily["vpd_06_18_kPa"] = daily["vpd_luz_kPa"]
+        daily["par_06_18_umol"] = daily["par_luz_umol"]
 
     processed=root/"data"/"processed"/"microclima";results=root/"results"/"microclima";processed.mkdir(parents=True,exist_ok=True);results.mkdir(parents=True,exist_ok=True)
     native.drop(columns=["file_end"]).to_csv(processed/"microclima_native.csv",index=False,encoding="utf-8-sig")

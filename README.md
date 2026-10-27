@@ -4,403 +4,515 @@
 
 **Capitão Poço, Pará, Amazônia brasileira**
 
-Documentação técnica, operacional e de dados.
+Canopy2Ground é um pipeline reproduzível para ingestão, controle de qualidade, integração e análise de séries eco-hidrológicas e microclimáticas. A versão 2 foi estruturada para ser **autônoma**: o fluxo operacional parte diretamente dos arquivos de campo em `data/raw/`, integra produtos climáticos externos e produz séries validadas e harmonizadas sem depender da execução prévia de uma versão anterior.
 
-- [Documentação em PDF](docs/Canopy2Ground_Documentacao.pdf)
-- [Biblioteca de variáveis](docs/BIBLIOTECA_VARIAVEIS.md)
-- [Status da base](docs/STATUS_DADOS.md)
-- [Guia de publicação no GitHub](GITHUB_SETUP.md)
-- [Identidade do projeto](docs/PROJECT_IDENTITY.md)
-
-## 1. Visão geral
-
-**Canopy2Ground** é uma plataforma integrada de processamento e organização de dados desenvolvida para o monitoramento de microclima, água no solo e precipitação em áreas de pastagem, floresta secundária e floresta primária na Amazônia oriental. O sistema automatiza a ingestão, padronização, controle de qualidade e integração de séries temporais provenientes de diferentes sensores de campo, preservando os dados brutos e garantindo rastreabilidade ao longo de todo o fluxo de processamento. A plataforma gera bases consolidadas e reproduzíveis para análises eco-hidrológicas e microclimáticas, permite a incorporação contínua de novos dados e foi estruturada para futura integração com produtos climáticos externos e disponibilização de dados e resultados em ambiente online.
-
-O objetivo operacional do pipeline é transformar arquivos brutos de diferentes sensores em bases padronizadas, auditáveis e prontas para análise científica, mantendo rastreabilidade completa desde o arquivo original até as tabelas finais.
-
-O fluxo integra quatro grupos principais de dados:
-
-- **Precipitação**
-- **Microclima**
-- **Umidade e temperatura do solo (TMS)**
-- **Pressão/nível relativo de água em poços**
-
-Os dados são atualizados aproximadamente a cada **10 dias**.
-
-
-
-> **Status:** primeira versão tecnicamente validada — **Canopy2Ground v1.0.0**.  
+> **Status:** **Canopy2Ground v2.0.0** — versão estável.  
 > **Repositório:** `https://github.com/Neofrt/canopy2ground`  
-> **Versionamento:** código e documentação são mantidos no GitHub; dados RAW permanecem fora do repositório.
+> **Princípio central:** dados RAW são imutáveis; todo produto derivado é reconstruível pelo pipeline.
 
-O repositório foi estruturado para funcionar como **documentação viva do projeto**. Novas versões do código, mudanças metodológicas e atualizações da biblioteca de variáveis podem ser registradas progressivamente sem substituir o histórico anterior.
+Documentação:
 
----
+- [LEIAME / documentação técnica](docs/LEIAME.md)
+- [LEIAME em PDF](docs/Canopy2Ground_v2.0.0_LEIAME.pdf)
+- [Biblioteca de variáveis](docs/BIBLIOTECA_VARIAVEIS.md)
+- [Configuração climática](docs/CLIMATE_SETUP.md)
+- [Infográfico do projeto](docs/assets/canopy2ground_infographic.png)
 
-## 2. Princípios do pipeline
+## 1. Fluxo completo
 
-O processamento segue cinco princípios:
+```mermaid
+flowchart TD
+    A[data/raw] --> B[Field processing]
+    B --> C[Precipitation]
+    B --> D[Microclimate]
+    B --> E[TMS]
+    B --> F[Wells]
+    C --> G[Integration + QA]
+    D --> G
+    E --> G
+    F --> G
+    G --> H[data/processed]
+    H --> I[Field climate reference]
+    J[data/external] --> K[INMET / ERA5-Land / CHIRPS-v3]
+    I --> L[Climate validation]
+    K --> L
+    L --> M[Pasture + ERA5 paired daily series]
+    M --> R[Dynamic model refit + cross-validation]
+    R --> N[Temperature: harmonized with updated coefficients]
+    R --> O[RH: harmonized with updated coefficients]
+    R --> P[VPD: harmonized with updated coefficients]
+    N --> Q[Scientific outputs]
+    O --> Q
+    P --> Q
+```
 
-1. **Os arquivos brutos nunca são alterados.**
-2. Novos downloads podem ser adicionados sem apagar os anteriores.
-3. Downloads cumulativos e registros sobrepostos são identificados e deduplicados.
-4. As transformações são documentadas e reproduzíveis.
-5. Informações de qualidade e cobertura dos dados são preservadas juntamente com os valores processados.
+O comando operacional principal no Windows é:
 
-A pasta:
+```powershell
+.\run.bat
+```
+
+O `run.bat` contorna a política de execução de scripts do PowerShell e chama o `run.ps1` internamente. Na primeira execução, o ambiente virtual `.venv/` é criado, as dependências são instaladas e os testes são executados antes do pipeline.
+
+Por padrão, o fluxo completo também tenta **atualizar ERA5-Land e CHIRPS-v3** até a última data disponível nos dados de campo. Se a execução precisar ser feita sem acesso à internet ou sem atualizar os produtos climáticos, use:
+
+```powershell
+.\run.bat --no-download-climate
+```
+
+A CDS API deve estar configurada para downloads do ERA5-Land.
+
+> **Observação sobre o INMET.** A integração dos dados do INMET está implementada na v2, porém sua aquisição ainda pode depender de um arquivo previamente obtido ou da rotina de aquisição utilizada nas etapas anteriores de desenvolvimento do Canopy2Ground. Diferentemente de ERA5-Land e CHIRPS-v3, a disponibilidade do INMET não deve ser presumida apenas pela execução de `run_pipeline.py` ou `run_climate_pipeline.py --download`. Quando nenhum arquivo compatível for encontrado em `data/external/INMET/`, o pipeline registra a ausência, preserva a execução das demais etapas e não substitui valores ausentes por estimativas.
+
+## 2. Política de dados
+
+`data/raw/` é gerenciado pelo usuário e tratado como **somente leitura**. O Canopy2Ground cria automaticamente apenas a **estrutura de diretórios** esperada (`PASTO`, `SECUNDARIA`, `PRIMARIA` e suas subpastas), mas nunca cria, altera, move, renomeia ou sobrescreve arquivos RAW.
+
+Novos downloads de sensores devem ser adicionados às respectivas pastas sem apagar os anteriores. Sobreposições temporais são auditadas e deduplicadas durante o processamento.
+
+```text
+data/
+├── raw/          # observações originais de campo; imutáveis
+├── external/     # INMET, ERA5-Land e CHIRPS-v3
+└── processed/    # produtos derivados e reconstruíveis
+```
+
+`data/raw/`, `data/external/`, `data/processed/`, `results/` e configurações locais não são versionados no GitHub por padrão.
+
+## 3. Organização dos dados RAW
 
 ```text
 data/raw/
+├── PASTO/
+│   ├── Pluviometro/
+│   ├── Poço/
+│   ├── Termohigrometro/
+│   └── TMS/
+├── SECUNDARIA/
+│   ├── Pluviometro/
+│   ├── Poço/
+│   ├── Termohigrometro/
+│   └── TMS/
+└── PRIMARIA/
+    ├── Pluviometro/
+    ├── Termohigrometro/
+    └── TMS/
 ```
 
-é tratada como **somente leitura**.
+Mapeamento interno:
 
-Todos os resultados derivados são gravados em:
+| Pasta de campo | Código interno |
+|---|---|
+| `PASTO` | `pasto` |
+| `SECUNDARIA` | `cap` |
+| `PRIMARIA` | `ref` |
 
-```text
-data/processed/
-```
+### 3.1 Sensores principais
 
-e os diagnósticos e auditorias em:
+**Pluviômetros**
 
-```text
-results/
-```
+- `22376831`: floresta primária (`ref`)
+- `22376832`: pasto inicialmente; transferido posteriormente para floresta secundária
+- `22094687`: novo pluviômetro externo do pasto; tipping bucket de 0,2 mm por tombamento
 
----
+**Termohigrômetros MX**
 
-## 3. Estrutura do projeto
+- `22378330`: floresta primária
+- `22473389`: pasto
+- `22475755`: floresta secundária
+
+**TMS**
+
+| Local | 15 cm | 50 cm | profundidade maior |
+|---|---|---|---|
+| Primária | 95329567 | 95329562 | 95329551 (100 cm) |
+| Pasto | 95329559 | 95329570 | 95329552 (100 cm) |
+| Secundária | 95329563 | 95329558 | 95329566 (80 cm) |
+
+**Poços**
+
+- `22428978`: pasto
+- `22428973`: floresta secundária
+
+As profundidades totais dos poços permanecem provisórias. O pipeline não converte automaticamente pressão para profundidade absoluta do lençol freático sem confirmação da posição do sensor e compensação barométrica.
+
+## 4. Estrutura do repositório v2
+
+A v2 mantém separadas as rotinas de campo, clima, validação e produtos finais. O pacote já contém a estrutura de `data/raw/`, `data/external/`, `data/processed/` e `results/`; `setup_project.py` também a recria quando necessário sem modificar arquivos existentes.
 
 ```text
 canopy2ground/
-│
-├── data/
-│   ├── raw/
-│   │   ├── PASTO/
-│   │   │   ├── Pluviometro/
-│   │   │   ├── Poço/
-│   │   │   ├── Termohigrometro/
-│   │   │   └── TMS/
-│   │   │
-│   │   ├── SECUNDARIA/
-│   │   │   ├── Pluviometro/
-│   │   │   ├── Poço/
-│   │   │   ├── Termohigrometro/
-│   │   │   └── TMS/
-│   │   │
-│   │   └── PRIMARIA/
-│   │       ├── Pluviometro/
-│   │       ├── Termohigrometro/
-│   │       └── TMS/
-│   │
-│   ├── processed/
-│   │   ├── precipitacao/
-│   │   ├── microclima/
-│   │   ├── tms/
-│   │   ├── poco/
-│   │   └── integrated/
-│   │
-│   └── external/
-│       ├── CHIRPS/
-│       └── INMET/
-│
-├── modules/
-│   ├── precipitation.py
-│   ├── microclimate.py
-│   ├── tms.py
-│   ├── wells.py
-│   └── integrate.py
+├── climate/                 # aquisição, normalização, validação e harmonização climática
+├── config/                  # templates e política metodológica de harmonização
+├── modules/                 # precipitação, microclima, TMS, poços e integração
 ├── scripts/
 │   ├── validate_outputs.py
+│   ├── compare_microclimate_sources.py
+│   ├── generate_figures.py
 │   └── generate_status.py
 ├── tests/
-│   └── test_core.py
-├── config/
-│   └── project_config.example.json
 ├── docs/
+├── data/
+│   ├── raw/                 # fornecido pelo usuário; somente leitura
+│   ├── external/            # ERA5-Land, CHIRPS-v3 e INMET
+│   └── processed/           # produtos reconstruíveis
 ├── results/
+│   ├── validation/
+│   │   ├── field/
+│   │   └── climate/
+│   ├── harmonization/
+│   ├── figures/
+│   └── tables/
 ├── run_pipeline.py
+├── run_climate_pipeline.py
 ├── setup_project.py
+├── setup_env.ps1
+├── run.ps1
+├── setup_env.sh
+├── run.sh
 ├── requirements.txt
 └── README.md
 ```
 
----
+As pastas legadas `results/figuras`, `results/modelos`, `results/tabelas`, `results/v2_microclimate` e equivalentes não fazem parte da estrutura operacional da v2 refinada.
 
-## 4. Como atualizar os dados
+## 5. Ambiente virtual
 
-### 4.1 Inserir novos arquivos
+O fluxo recomendado utiliza um ambiente virtual local em `.venv/`. O usuário não precisa instalar manualmente as bibliotecas do projeto.
 
-A cada nova coleta/download, os arquivos devem ser adicionados à pasta correspondente.
-
-Exemplo:
-
-```text
-data/raw/PASTO/Pluviometro/
-data/raw/PASTO/TMS/
-data/raw/PASTO/Termohigrometro/
-data/raw/PASTO/Poço/
-```
-
-Os arquivos anteriores **não devem ser apagados ou sobrescritos**.
-
-Recomenda-se manter a data do download no nome do arquivo quando possível.
-
----
-
-## 5. Como executar o pipeline
-
-No PowerShell, entre na **raiz do repositório**, onde está `run_pipeline.py`:
+No Windows, a primeira execução deve ser feita preferencialmente com:
 
 ```powershell
-cd C:\Users\bruno\OneDrive\Documents\posdoc_cp
+.\run.bat
 ```
 
-Executar:
+O `run.ps1` permanece disponível, mas pode ser bloqueado pela `ExecutionPolicy` do Windows.
+
+Se `.venv/` ainda não existir, o script procura primeiro pelo comando `python` já funcional no sistema, depois pela instalação padrão do Python 3.12 e, por último, pelo `py -3.12`. Somente após localizar de fato um Python 3.12 ele cria o ambiente, instala `requirements.txt`, executa os testes e inicia o pipeline. Uma falha na criação do ambiente interrompe imediatamente a execução; o script não continua com um `.venv` incompleto. Nas execuções seguintes, o mesmo comando reutiliza o ambiente existente.
+
+Também é possível preparar apenas o ambiente:
 
 ```powershell
-& C:\Users\bruno\AppData\Local\Programs\Python\Python312\python.exe .\run_pipeline.py --root .
+.\setup_env.ps1
 ```
 
-> Existe apenas uma implementação dos módulos científicos: `modules/`. Não deve existir uma segunda cópia em `scripts/modules/`.
+No Linux/macOS:
 
-O pipeline executa sequencialmente:
+```bash
+./run.sh
+```
+
+A criação do ambiente exige **Python 3.12 instalado no sistema** e acesso à internet na primeira instalação das dependências. O ambiente virtual evita instalações globais e elimina a instalação manual de bibliotecas, mas não substitui o próprio Python nem elimina os downloads da primeira preparação. A pasta `.venv/` não deve ser versionada nem distribuída, pois é específica do sistema operacional e da máquina.
+
+Se houver mais de uma instalação de Python no Windows, o executável pode ser informado explicitamente:
+
+```powershell
+$env:C2G_PYTHON = "C:\Users\usuario\AppData\Local\Programs\Python\Python312\python.exe"
+.\run.bat
+```
+
+Para ERA5-Land, a CDS API continua exigindo configuração das credenciais do Copernicus Climate Data Store.
+
+## 6. Execução
+
+### Fluxo completo recomendado
+
+```powershell
+.\run.bat
+```
+
+O fluxo completo atualiza ERA5-Land e CHIRPS-v3 por padrão. Para reutilizar somente os arquivos climáticos já existentes, sem nova tentativa de download:
+
+```powershell
+.\run.bat --no-download-climate
+```
+
+O fluxo executa, na ordem:
+
+1. verificação das dependências e configuração;
+2. criação/verificação da estrutura de `data/raw`, `data/external`, `data/processed` e `results`, sem modificar arquivos RAW;
+3. processamento da precipitação;
+4. processamento do microclima;
+5. processamento dos TMS;
+6. processamento dos poços, quando houver RAW;
+7. integração das bases de campo;
+8. validação automática das saídas de campo;
+9. construção da referência climática da pastagem;
+10. normalização de INMET, ERA5-Land e CHIRPS-v3;
+11. validação climática;
+12. comparação diária de temperatura, RH e VPD entre Pastagem, INMET e ERA5-Land;
+13. aplicação dos modelos operacionais de harmonização;
+14. geração das quatro figuras e tabelas de suporte;
+15. atualização do status da base.
+
+O comando Python direto continua disponível para uso avançado dentro de um ambiente já preparado:
+
+```powershell
+.\.venv\Scripts\python.exe .\run_pipeline.py --root .
+```
+
+### Apenas dados de campo
+
+```powershell
+.\run.bat --field-only
+```
+
+### Apenas camada climática
+
+```powershell
+.\run.bat --climate-only
+```
+
+### Atualização automática de ERA5-Land e CHIRPS-v3
+
+A atualização é o comportamento padrão de `run.bat`. O argumento explícito continua aceito por compatibilidade:
+
+```powershell
+.\run.bat --download-climate
+```
+
+INMET é lido de `data/external/INMET/`. Sua aquisição ainda pode exigir um arquivo previamente obtido ou a rotina de aquisição usada nas etapas anteriores de desenvolvimento. A ausência de INMET não impede o processamento de campo nem a ingestão de ERA5-Land e CHIRPS-v3; análises que exigem simultaneamente Pastagem + INMET + ERA5-Land só são executadas quando as três fontes estão disponíveis.
+
+## 7. Convenções temporais
+
+Fuso horário local:
 
 ```text
-1. Verificação da estrutura
-2. Processamento da precipitação
-3. Processamento do microclima
-4. Processamento dos TMS
-5. Processamento dos poços
-6. Integração das bases
-7. Validação automática de integridade das saídas
-8. Geração/atualização do status da base
+America/Belem
 ```
-
-Ao final, os arquivos brutos permanecem intactos e todas as tabelas processadas são atualizadas.
-
----
-
-## 6. Escalas temporais
 
 ### Microclima e TMS
 
-A resolução analítica principal é de **30 minutos**.
+A resolução analítica contínua principal é de **30 minutos**.
 
-O período luminoso utilizado para métricas diurnas é:
+A janela operacional de luminosidade permanece documentada como:
 
 ```text
 06:00 <= horário < 18:00
 ```
 
+Ela é utilizada quando uma análise diurna específica exige essa janela. A comparação climática principal da v2 para temperatura, RH e VPD utiliza médias de **24 horas**.
+
 ### Precipitação
 
-A precipitação é agregada em escala diária utilizando a janela hidrológica:
+A precipitação diária de campo utiliza a janela hidrológica:
 
 ```text
 12:00 → 12:00
 ```
 
-Essa definição preserva a compatibilidade com a série histórica de precipitação e permite alinhamento com métricas diárias de água no solo.
+### TMS
 
-### TMS e horário
+Os timestamps TOMST/TMS são interpretados como UTC e convertidos explicitamente para `America/Belem`. `tz_q` é preservado apenas para auditoria e não desloca a série.
 
-Os timestamps dos sensores TMS exigem tratamento específico de fuso horário. Os timestamps TOMST são interpretados como **UTC** e convertidos explicitamente para `America/Belem`. O campo `tz_q` é preservado apenas como metadado de auditoria e não é utilizado para deslocar a série temporal. Essa decisão evita que configurações antigas de fuso gravadas no logger alterem silenciosamente o alinhamento científico entre TMS, precipitação e microclima.
+## 8. Processamento de campo
 
----
+### Precipitação
 
-## 7. Principais grupos de variáveis
+O pipeline reconstrói a série canônica de precipitação do pasto preservando mudanças de equipamento e lacunas reais. Ausências não são convertidas em zero nem interpoladas automaticamente.
 
-### 7.1 Precipitação
+O novo pluviômetro `22094687` possui resolução nominal de 0,2 mm por tombamento. A rotina identifica a estrutura do arquivo antes de aplicar conversão para evitar dupla multiplicação quando o export já está em milímetros.
 
-| Variável | Unidade | Descrição |
-|---|---:|---|
-| `rain_ext_mm` | mm | Precipitação diária no pasto; referência climática externa |
-| `rain_local_mm` | mm | Precipitação do próprio local |
-| `coverage` | proporção | Fração do período diário efetivamente coberta |
-| `status` | texto | Classificação de completude do registro |
-| `use_for_calibration_strict` | lógico | Dia completo para validações externas |
-| `use_for_calibration_relaxed` | lógico | Dia com cobertura aceitável para análise de sensibilidade |
+O QA distingue dias completos, quase completos, parciais e ausentes. Para validação climática de precipitação, a v2 utiliza o critério **strict** como análise principal; o critério relaxed permanece como sensibilidade documentada.
 
-O novo pluviômetro do pasto é um tipping bucket com resolução de **0,2 mm por tombamento**. O pipeline reconhece o formato de exportação antes da conversão para evitar dupla conversão de valores que já estejam em milímetros.
+### Microclima
 
----
+São processados temperatura do ar, umidade relativa, VPD e PAR. A elevada umidade relativa observada na floresta primária é preservada como condição ambiental real e não recebe filtro automático de saturação.
 
-### 7.2 Microclima
+### TMS
 
-| Variável | Unidade | Descrição |
-|---|---:|---|
-| `temp_C` | °C | Temperatura do ar |
-| `rh_pct` | % | Umidade relativa |
-| `vpd_kPa` | kPa | Déficit de pressão de vapor |
-| `par_umol` | µmol m⁻² s⁻¹ | Radiação fotossinteticamente ativa |
-| `dli_mol_m2` | mol m⁻² d⁻¹ | Integral diária de luz |
-| `delta_temp_C` | °C | Diferença de temperatura em relação ao pasto |
-| `delta_rh_pp` | p.p. | Diferença de RH em relação ao pasto |
-| `delta_vpd_kPa` | kPa | Diferença de VPD em relação ao pasto |
-| `fractional_cover_daily` | 0–1 | Cobertura fracionária estimada a partir da atenuação de PAR |
+São preservados sinal bruto, água volumétrica, temperatura do solo e mudanças diárias. Valores elevados de `|Δθ| > 0,10 m³ m⁻³` não são excluídos automaticamente; são mantidos como eventos diagnósticos de grande secagem ou umedecimento.
 
-A elevada umidade relativa observada na floresta primária foi verificada em campo e é tratada como **condição ambiental real**, não como erro automático de sensor.
+### Poços
 
----
+A pressão absoluta é mantida como observação primária. Eventos conhecidos de manuseio podem ser marcados para revisão, sem exclusão automática.
 
-### 7.3 TMS — água e temperatura do solo
+## 9. Principais grupos de variáveis e tabelas de campo
 
-| Variável | Unidade | Descrição |
-|---|---:|---|
-| `tms_signal` | sinal bruto | Sinal original do sensor |
-| `vwc_m3m3` | m³ m⁻³ | Conteúdo volumétrico de água |
-| `swc_pct` | % v/v | Conteúdo volumétrico expresso em porcentagem |
-| `soil_temp_C` | °C | Temperatura do solo |
-| `delta_theta_m3m3` | m³ m⁻³ | Mudança diária de conteúdo de água no solo |
-| `delta_theta_pp` | pontos percentuais | Mudança diária em % v/v |
-| `delta_theta_event_class` | categoria | Classificação descritiva de grandes mudanças |
+A v2 preserva a documentação operacional das variáveis centrais do processamento de campo. O dicionário completo permanece em [`docs/BIBLIOTECA_VARIAVEIS.md`](docs/BIBLIOTECA_VARIAVEIS.md).
 
-Valores elevados de `|Δθ|` não são removidos automaticamente. Eles podem representar respostas eco-hidrológicas reais e são mantidos para investigação.
+| Grupo | Variáveis centrais | Observação |
+|---|---|---|
+| Precipitação | `rain_ext_mm`, `rain_local_mm`, `coverage`, `status`, flags de QA/completude | Agregação diária na janela hidrológica 12:00–12:00 |
+| Microclima | `temp_C`, `rh_pct`, `vpd_kPa`, `par_umol`, `dli_mol_m2`, `delta_temp_C`, `delta_rh_pp`, `delta_vpd_kPa` | Resolução principal de 30 min; resumos diários e diurnos quando aplicável |
+| TMS | `tms_signal`, `vwc_m3m3`, `swc_pct`, `soil_temp_C`, `delta_theta_m3m3`, `delta_theta_event_class` | Grandes `|Δθ|` são preservados e descritos, não removidos automaticamente |
+| Poços | `pressure_abs_kPa`, `temperature_C`, `delta_pressure_abs_kPa`, flags de QA | Pressão absoluta é preservada como observação primária |
+| Clima/harmonização | ERA5-Land bruto e harmonizado, INMET, CHIRPS-v3, métricas de validação, modelo corrente e histórico | O ERA5-Land bruto nunca é sobrescrito |
 
----
+Principais tabelas de campo e integração:
 
-### 7.4 Poços
+| Arquivo | Função principal |
+|---|---|
+| `data/processed/integrated/metricas_diarias_integradas.csv` | Síntese diária integrada para análises eco-hidrológicas |
+| `data/processed/integrated/dados_integrados_30min.csv` | Base sincronizada de 30 min para eventos e dinâmica subdiária |
+| `data/processed/precipitacao/04_precipitacao_diaria_pasto_externo.csv` | Série canônica diária da precipitação externa do pasto, com QA |
+| `data/processed/microclima/microclima_diario_integrado.csv` | Resumos diários de microclima e contrastes em relação ao pasto |
+| `data/processed/tms/tms_diario_hidrologico.csv` | Água e temperatura do solo resumidas na janela hidrológica |
 
-| Variável | Unidade | Descrição |
-|---|---:|---|
-| `pressure_abs_kPa` | kPa | Pressão absoluta registrada pelo logger |
-| `temperature_C` | °C | Temperatura associada ao logger |
-| `delta_pressure_abs_kPa` | kPa | Mudança relativa de pressão |
-| `qa_review` | lógico | Registro que requer inspeção |
+As tabelas de poços, validação climática, harmonização e aquelas utilizadas para gerar figuras são documentadas na biblioteca de datasets e na documentação técnica.
 
-A conversão para profundidade absoluta do lençol freático ainda depende da compensação barométrica e da confirmação da posição real de instalação de cada logger.
-
----
-
-## 8. Principais tabelas
-
-### `metricas_diarias_integradas.csv`
-
-Tabela analítica principal.
-
-Unidade de observação:
+## 10. Produtos climáticos externos
 
 ```text
-data × site × profundidade
+data/external/
+├── ERA5/
+├── INMET/
+└── CHIRPS/
+    ├── sat/
+    └── rnl/
 ```
 
-Integra:
+### ERA5-Land
 
-- precipitação;
-- água no solo;
-- microclima;
-- cobertura fracionária;
-- pressão dos poços;
-- métricas de QA.
+A v2 normaliza temperatura, ponto de orvalho/RH, VPD, precipitação, radiação, vento, pressão, água no solo e temperatura do solo quando disponíveis. O ponto espacial de referência do pasto é:
 
----
+```text
+latitude  = -1.760388
+longitude = -47.190124
+```
 
-### `dados_integrados_30min.csv`
+### INMET
 
-Base de alta resolução temporal.
+Os horários de origem são tratados como UTC e convertidos para `America/Belem` antes do pareamento com o campo.
 
-Indicada para:
+**Limitação conhecida da v2:** a integração do INMET está operacional, mas a aquisição ainda pode depender de um arquivo previamente obtido ou da rotina de aquisição utilizada nas etapas anteriores de desenvolvimento. O comando de download climático não deve ser interpretado como garantia de aquisição automática do INMET. Se `data/external/INMET/` não contiver um arquivo compatível, o pipeline registra a fonte como indisponível e segue com as demais etapas possíveis, sem preencher artificialmente os dados ausentes.
 
-- análise por eventos;
-- resposta do solo após chuva;
-- defasagens temporais;
-- conectividade vertical;
-- relação entre água no solo e poço;
-- respostas rápidas ao microclima.
+### CHIRPS-v3
 
----
+São suportados os produtos `sat` e `rnl`. Dados preliminares não entram na validação primária por padrão. Ausências de dias ainda não publicados permanecem ausentes; não são interpretadas como chuva zero.
 
-### `04_precipitacao_diaria_pasto_externo.csv`
+## 11. Validação microclimática
 
-Base canônica de precipitação externa.
+O pareamento **Pastagem + ERA5-Land** é produzido sempre que essas duas fontes estão disponíveis. Ele utiliza horários simultâneos, agrega médias diárias de 24 horas e exige pelo menos 18 horas comuns por dia. Esse pareamento alimenta as regressões, a validação cruzada e a atualização dos modelos de harmonização, sem depender da disponibilidade do INMET.
 
-É a principal tabela para comparação com:
+Quando o INMET também está disponível, o pipeline produz adicionalmente a comparação de três fontes (Pastagem, ERA5-Land e INMET). Para cada variável são avaliados os contrastes:
 
-- CHIRPS;
-- INMET;
-- outros produtos climáticos.
+```text
+ERA5 - Campo
+INMET - Campo
+ERA5 - INMET
+```
 
----
+A inferência utiliza diferenças diárias pareadas com GLSAR e estrutura AR(1). Os três p-valores de cada variável são ajustados por Holm. O pipeline também reporta Pearson `r`, `R²`, CCC de Lin, MAE, RMSE, viés, inclinação e intercepto.
 
-### `microclima_diario_integrado.csv`
+Os boxplots científicos recebem letras derivadas desses mesmos contrastes. A ausência de INMET impede apenas os produtos que dependem explicitamente das três fontes; não bloqueia as regressões Pastagem × ERA5-Land, a atualização dos modelos ou as figuras independentes do INMET.
 
-Resume o microclima durante o período luminoso e inclui:
+### 11.1 Precipitação
 
-- temperatura;
-- RH;
-- VPD;
-- PAR;
-- DLI;
-- diferenças em relação ao pasto;
-- transmitância;
-- cobertura fracionária.
+A precipitação diária é tratada separadamente das variáveis atmosféricas contínuas. O pipeline compara a precipitação observada na pastagem com ERA5-Land e INMET, mantendo o melhor alinhamento temporal documentado para cada fonte. A avaliação quantitativa é baseada em `r`, RMSE, PBIAS, NSE e KGE. A saída gráfica padrão apresenta a série diária e os totais mensais dos meses com pelo menos 90% de cobertura válida no campo e 90% de cobertura pareada com o respectivo produto. CHIRPS-v3 permanece disponível na validação técnica e nas tabelas de auditoria.
 
----
+## 12. Harmonização ERA5-Land
 
-### `tms_diario_hidrologico.csv`
+A v2 distingue **método de harmonização** e **coeficientes do modelo**. O método é versionado; os coeficientes são atualizados cumulativamente à medida que novos dias pareados entre Pastagem e ERA5-Land entram na base. Assim, o pipeline não mantém uma equação permanentemente congelada enquanto a série de monitoramento continua crescendo.
 
-Resume água no solo na janela hidrológica diária.
+A política metodológica está registrada em:
 
-Contém:
+```text
+config/harmonization_policy.json
+```
 
-- VWC;
-- SWC;
-- Δθ;
-- cobertura de dados;
-- classificação de grandes eventos de mudança hídrica.
+Na configuração atual, temperatura, RH e VPD utilizam regressão linear. Essa decisão foi adotada após a validação cruzada indicar redução consistente do erro também para temperatura. Em cada execução com novos dados pareados, o pipeline: (1) reconstrói a série diária Pastagem + ERA5-Land; (2) executa validação cruzada *leave-one-day-out* com embargo temporal de um dia; (3) reestima os coeficientes com toda a série disponível; (4) grava o modelo corrente; e (5) aplica esse modelo à série ERA5-Land. Os valores brutos permanecem preservados em paralelo.
 
----
+O modelo corrente é salvo em:
 
-### `pocos_diario_pressao_absoluta.csv`
+```text
+results/harmonization/current_model.json
+```
 
-Resume a dinâmica diária da pressão registrada nos poços.
+A evolução dos modelos é registrada em:
 
----
+```text
+results/harmonization/model_history.csv
+```
 
-## 9. Controle de qualidade
+O histórico inclui período usado no ajuste, número de dias, intercepto, inclinação, `R²`, RMSE e CCC. Se os dados pareados não mudarem, uma nova execução não duplica o mesmo `model_id` no histórico.
 
-O QA é utilizado para **descrever a confiabilidade e a completude da observação**, não para apagar automaticamente respostas ecológicas incomuns.
+As equações não são fixadas no README, pois os coeficientes mudam com a expansão da série observacional. O modelo vigente, incluindo intercepto, inclinação, período e número de dias utilizados, é registrado em `results/harmonization/current_model.json`; a evolução completa permanece em `results/harmonization/model_history.csv`.
 
-### Exemplos
+A série ERA5-Land original é sempre preservada. O pipeline cria novas colunas para o produto harmonizado em vez de sobrescrever valores brutos.
 
-**Precipitação**
-- dia completo;
-- dia próximo de completo;
-- dia parcial;
-- registro ausente.
+## 13. Produto climático diário final
 
-**Microclima**
-- número de observações disponíveis;
-- cobertura temporal;
-- preservação de condições ambientais extremas quando verificadas em campo.
+Arquivo:
 
-**TMS**
-- erros declarados pelo sensor;
-- cobertura temporal;
-- manutenção de eventos extremos para investigação.
+```text
+data/processed/climate/climate_daily_harmonized.csv
+```
 
-**Poços**
-- mudanças abruptas de pressão;
-- registros compatíveis com retirada/manuseio do equipamento.
+Campos centrais:
 
----
+```text
+date
+era5_temp_C_raw
+era5_rh_pct_raw
+era5_vpd_kPa_raw
+temp_C_final
+temp_C_harmonized
+rh_pct_harmonized
+vpd_kPa_harmonized
+n_hours
+use_for_harmonization
+model_id
+model_generated_at_utc
+model_n_days
+reference_site
+temporal_scale
+```
 
-## 10. Salvaguardas de integridade dos dados
+## 14. Figuras científicas da v2
 
-A integração utiliza validação explícita das chaves de `merge`. Relações esperadas como `one_to_one` e `many_to_one` são verificadas pelo `pandas`; se uma duplicata inesperada puder multiplicar linhas, o pipeline **interrompe a execução** em vez de gerar silenciosamente uma tabela incorreta.
+As figuras são geradas **independentemente**, de acordo com os dados realmente disponíveis. A ausência de uma fonte não impede figuras que não dependem dela. O arquivo `results/figures/FIGURE_STATUS.csv` registra `GENERATED` ou `SKIPPED` para cada produto.
 
-A configuração local (`config/project_config.json`) também é preservada: atualizações do código apenas adicionam campos ausentes do esquema e **não sobrescrevem valores definidos pelo usuário**. Chaves antigas, como `project_start`, podem permanecer no arquivo por rastreabilidade, mas são ignoradas pelo processamento atual.
+1. **Figura 1 — condições atmosféricas:** requer Pastagem + ERA5-Land + INMET e os contrastes GLSAR-AR(1)+Holm;
+2. **Figura 2 — relação ERA5-Land × Pastagem:** requer somente Pastagem + ERA5-Land e apresenta regressões diárias de temperatura, RH e VPD, linha 1:1, equação, `R²` e número de dias;
+3. **Figura 3 — harmonização:** requer o modelo corrente e apresenta redução percentual do RMSE e CCC obtidos por validação cruzada;
+4. **Figura 4 — precipitação:** apresenta (A) a série diária de precipitação da Pastagem, ERA5-Land e INMET para os alinhamentos temporais selecionados e (B) os totais mensais dos meses com pelo menos 90% de cobertura válida no campo e 90% de cobertura pareada. A figura não utiliza regressão linear. CHIRPS-v3 continua na validação técnica, mas não integra a figura principal.
 
-O módulo TMS trata explicitamente a ausência de arquivos válidos e arquivos sem mapeamento no inventário, retornando mensagens de erro descritivas antes da integração. Ao final do fluxo, `scripts/validate_outputs.py` verifica novamente chaves únicas, alinhamento UTC→horário local dos TMS, presença da classificação descritiva de Δθ e ausência de classificação indevida da saturação de RH como erro.
+Saídas finais:
 
----
+```text
+results/figures/
+├── figure_01_microclimate_sources.png
+├── figure_02_era5_pasture_regressions.png
+├── figure_03_harmonization_performance.png
+├── figure_04_precipitation_comparison.png
+├── FIGURE_CAPTIONS.md
+└── FIGURE_STATUS.csv
 
-## 11. Rastreabilidade
+results/tables/
+├── table_01_microclimate_daily_summary.csv
+├── table_02_microclimate_significance_letters.csv
+├── table_03_microclimate_glsar_contrasts.csv
+├── table_04_era5_pasture_regressions.csv
+├── table_05_harmonization_performance.csv
+├── table_06_precipitation_selected_metrics.csv
+└── table_07_precipitation_complete_months.csv
+```
 
-Cada etapa preserva informação suficiente para retornar ao dado original.
+## 15. Controle de qualidade e integridade
 
-Sempre que possível, são mantidos:
+O pipeline interrompe a execução quando condições centrais de integridade falham. Entre os testes estão:
+
+- existência das principais tabelas processadas;
+- unicidade das chaves temporais e espaciais;
+- alinhamento UTC → `America/Belem` dos TMS;
+- preservação de eventos extremos de `Δθ`;
+- ausência de classificação automática da saturação de RH na floresta primária como erro;
+- testes de normalização climática;
+- testes dos modelos operacionais de harmonização.
+
+Executar manualmente:
+
+```powershell
+python -m compileall -q .
+python -m unittest discover -s tests -v
+```
+
+O GitHub Actions executa compilação e testes em Windows e Linux.
+
+## 16. Reprodutibilidade e rastreabilidade
+
+Sempre que disponível, o pipeline preserva:
 
 ```text
 site
@@ -413,154 +525,65 @@ valor_processado
 QA
 ```
 
-Isso permite reconstruir a origem de qualquer valor utilizado nas análises.
+Os dados de entrada originais permanecem separados dos produtos derivados. A configuração local é atualizada apenas pela adição de campos ausentes; valores definidos pelo usuário não são substituídos automaticamente.
 
----
+## 17. Atualização contínua dos modelos
 
-## 12. Atualização contínua
+A atualização dos modelos faz parte da execução operacional. Não é necessário editar equações manualmente nem substituir um arquivo de configuração quando novos dados são incorporados.
 
-O pipeline foi desenvolvido para receber novos dados aproximadamente a cada 10 dias.
-
-O fluxo operacional é:
+Sempre que existe pareamento diário Pastagem + ERA5-Land, `run_pipeline.py` executa automaticamente:
 
 ```text
-novo download
-      ↓
-data/raw
-      ↓
-run_pipeline.py
-      ↓
-data/processed
-      ↓
-QA / auditoria
-      ↓
-bases científicas atualizadas
+climate/fit_harmonization_models.py
 ```
 
-Não é necessário anexar manualmente linhas a planilhas antigas.
+A rotina compara ERA5 bruto, correção aditiva, regressão linear e, para VPD, a reconstrução física como diagnóstico. A política operacional atual utiliza regressão linear para temperatura, RH e VPD. Os coeficientes são reestimados com todos os dias disponíveis em cada atualização, enquanto as séries ERA5-Land brutas permanecem preservadas.
 
----
+A separação entre **política metodológica** e **parâmetros ajustados** evita duas situações indesejáveis: manter indefinidamente coeficientes obtidos com uma série curta e, no extremo oposto, mudar silenciosamente a família do modelo a cada execução. A série pode refinar os coeficientes continuamente, enquanto mudanças no método devem continuar sendo uma decisão científica explícita.
 
-## 13. Produtos externos
+## 18. Arquivos versionados e não versionados
 
-Produtos climáticos externos ficam separados dos dados de campo:
-
-```text
-data/external/
-```
-
-Atualmente estão previstos:
-
-- **INMET**
-- **CHIRPS**
-
-O primeiro uso do CHIRPS será a validação e harmonização da precipitação diária e mensal em relação ao pluviômetro de referência do pasto.
-
----
-
-## 14. Biblioteca completa de variáveis
-
-A descrição detalhada das variáveis é mantida separadamente em:
-
-```text
-docs/biblioteca_variaveis.csv
-docs/BIBLIOTECA_VARIAVEIS.md
-docs/biblioteca_datasets.csv
-docs/convencoes_projeto.csv
-```
-
-Esses documentos constituem o **dicionário oficial de dados do projeto**.
-
----
-
-## 15. Reprodutibilidade
-
-O pipeline foi estruturado para que uma nova execução utilizando os mesmos arquivos RAW produza novamente a mesma base processada.
-
-Isso permite:
-
-- auditoria;
-- reprodução dos resultados;
-- rastreamento de correções;
-- atualização progressiva da série temporal;
-- manutenção de uma única fonte oficial para cada variável.
-
----
-
-## 16. Próximas etapas
-
-As próximas etapas previstas são:
-
-1. validação final do alinhamento temporal dos TMS;
-2. integração da compensação barométrica dos poços;
-3. validação da precipitação com CHIRPS e INMET;
-4. harmonização climática;
-5. desenvolvimento dos módulos analíticos;
-6. disponibilização futura dos produtos processados por meio de uma interface web.
-
----
-
-## 17. Versionamento e manutenção no GitHub
-
-O GitHub será utilizado para versionar **código, documentação e convenções metodológicas**, e não como armazenamento primário dos dados brutos de campo.
-
-### O que deve ser versionado
+Versionados:
 
 ```text
 README.md
 modules/
+climate/
+scripts/
+tests/
+config/*.example.json
+config/harmonization_policy.json
 run_pipeline.py
+run_climate_pipeline.py
 setup_project.py
 requirements.txt
-config/project_config.example.json
 docs/
 CHANGELOG.md
 ```
 
-### O que não deve ser versionado por padrão
+Não versionados por padrão:
 
 ```text
 data/raw/
-data/processed/
 data/external/
+data/processed/
 results/
 config/project_config.json
+config/climate_config.json
 ```
 
-Esses caminhos são protegidos pelo arquivo `.gitignore`.
+## 19. Versionamento
 
-### Atualizações
+A v1.0.0 permanece como referência histórica da primeira versão validada de processamento de campo. A v2 incorpora esse fluxo e adiciona aquisição/normalização climática, validação, harmonização ERA5-Land e geração padronizada de resultados. A v2 não exige a execução da v1.
 
-Cada mudança relevante pode ser registrada com um novo *commit*. Isso permite identificar:
+Consulte `CHANGELOG.md` para decisões de cada release e `docs/` para documentação metodológica complementar.
 
-- o que mudou;
-- quando mudou;
-- por que mudou;
-- qual versão do pipeline gerou determinada base;
-- quais decisões metodológicas estavam vigentes naquele momento.
+## 20. Relatório automático de resultados
 
-O arquivo `CHANGELOG.md` resume alterações importantes entre versões.
+Ao final da camada climática, a v2 gera um relatório automático para conferência, auditoria e interpretação científica dos resultados. O texto é reconstruído a partir dos produtos da própria execução, acompanhando a expansão da série e as atualizações dos modelos.
 
-O script:
+O relatório utiliza os resultados correntes de comparação atmosférica, harmonização e precipitação. Número de dias pareados, coeficientes das regressões, `R²`, RMSE, CCC, contrastes GLSAR e métricas de precipitação são lidos das saídas produzidas pelo pipeline, reduzindo o risco de reutilização de valores antigos após novas execuções.
 
-```text
-scripts/generate_status.py
-```
+Além dos documentos gerados, `REPORT_INPUTS.csv` registra os arquivos utilizados na elaboração do relatório, suas datas de modificação, número de linhas e o `model_id` corrente quando aplicável. Esse arquivo permite auditar se o texto foi produzido com os resultados mais recentes.
 
-pode gerar automaticamente `docs/STATUS_DADOS.md` depois de cada atualização das séries, oferecendo uma visão rápida da cobertura temporal e dos principais produtos disponíveis.
-
----
-
-## 18. Visão de longo prazo
-
-A arquitetura foi construída para permitir que os dados de campo sejam continuamente incorporados sem reconstrução manual das planilhas.
-
-No futuro, a mesma estrutura poderá alimentar uma página web para:
-
-- consultar séries;
-- visualizar gráficos;
-- acompanhar cobertura dos sensores;
-- acessar documentação;
-- baixar planilhas processadas e produtos harmonizados.
-
-O site será uma camada de disponibilização; a fonte oficial continuará sendo o pipeline reproduzível descrito neste documento.
+As figuras e tabelas permanecem disponíveis separadamente em `results/figures/` e `results/tables/`, e o relatório não substitui essas saídas técnicas.
