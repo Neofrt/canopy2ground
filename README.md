@@ -6,7 +6,7 @@
 
 **Capitão Poço, Pará, Amazônia brasileira**
 
-Canopy2Ground é um pipeline reproduzível para ingestão, controle de qualidade, integração e análise de séries eco-hidrológicas e microclimáticas. A versão 2 foi estruturada para ser **autônoma**: o fluxo operacional parte diretamente dos arquivos de campo em `data/raw/`, integra produtos climáticos externos e produz séries validadas e harmonizadas sem depender da execução prévia de uma versão anterior.
+Canopy2Ground é um pipeline reproduzível para gestão, controle de qualidade, integração e análise de séries eco-hidrológicas e microclimáticas. A versão 2 foi estruturada para ser **autônoma**: o fluxo operacional parte diretamente dos arquivos de campo em `data/raw/`, integra produtos climáticos externos e produz séries validadas e harmonizadas sem depender da execução prévia de uma versão anterior.
 
 > **Status:** **Canopy2Ground v2.0.0** — versão estável.  
 > **Repositório:** `https://github.com/Neofrt/canopy2ground`  
